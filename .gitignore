@@ -1,0 +1,11 @@
+.gradle
+
+build
+
+gradle/wrapper/gradle-wrapper.jar
+
+libs/Licenses
+libs/HytaleServer.jar
+libs/HytaleServer.aot
+
+gradlew.bat

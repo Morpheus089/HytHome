@@ -1,0 +1,8 @@
+{
+  "Group": "games.player.home",
+  "Name": "HytHome",
+  "Version": "1.0.0",
+  "Author": "tsukuyomi_089",
+  "Description": "A simple home management plugin with no limits",
+  "Main": "games.player.home.HytHomePlugin"
+}
