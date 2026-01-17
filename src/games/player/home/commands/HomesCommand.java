@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nonnull;
 
-public class HomesCommand
-extends AbstractPlayerCommand {
+public class HomesCommand extends AbstractPlayerCommand {
+    
     private final HomeManager homeManager;
 
     public HomesCommand(@Nonnull HomeManager homeManager) {
@@ -22,25 +22,59 @@ extends AbstractPlayerCommand {
         this.homeManager = homeManager;
     }
 
+    @Override
     protected boolean canGeneratePermission() {
         return false;
     }
 
-    protected void execute(@Nonnull CommandContext commandContext, @Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
-        UUID uUID = playerRef.getUuid();
-        List<String> list = this.homeManager.getHomeNames(uUID);
-        commandContext.sendMessage(Message.raw((String)"§8------------------------------"));
-        if (list.isEmpty()) {
-            commandContext.sendMessage(Message.raw((String)"§cAucun home enregistre."));
-            commandContext.sendMessage(Message.raw((String)"§8------------------------------"));
+    @Override
+    protected void execute(
+            @Nonnull CommandContext commandContext,
+            @Nonnull Store<EntityStore> store,
+            @Nonnull Ref<EntityStore> ref,
+            @Nonnull PlayerRef playerRef,
+            @Nonnull World world) {
+        
+        UUID playerUuid = playerRef.getUuid();
+        
+        List<String> homeNames = this.homeManager.getHomeNames(playerUuid);
+        
+        commandContext.sendMessage(Message.raw("§8------------------------------"));
+        
+        if (homeNames.isEmpty()) {
+            commandContext.sendMessage(
+                Message.raw("§cAucun home enregistre.")
+            );
+            commandContext.sendMessage(
+                Message.raw("§7Utilise /sethome <nom> pour creer un home")
+            );
+            
+            commandContext.sendMessage(
+                Message.raw("§8------------------------------")
+            );
+            
             return;
         }
-        commandContext.sendMessage(Message.raw((String)"§a[✓] Liste de tes homes"));
-        for (String homeName : list) {
-            HomeManager.HomeLocation location = this.homeManager.getHome(uUID, homeName);
-            String dimension = location != null ? location.worldName() : "Inconnu";
-            commandContext.sendMessage(Message.raw((String)"§7• §f" + homeName + " §8(" + dimension + ")"));
+        
+        commandContext.sendMessage(
+            Message.raw("§a[✓] Liste de tes homes")
+        );
+        
+        for (String homeName : homeNames) {
+            HomeManager.HomeLocation location = this.homeManager.getHome(
+                playerUuid, 
+                homeName
+            );
+            
+            String dimension = location != null 
+                ? location.worldName() 
+                : "Inconnu";
+            
+            commandContext.sendMessage(
+                Message.raw("§7• §f" + homeName + " §8(" + dimension + ")")
+            );
         }
-        commandContext.sendMessage(Message.raw((String)"§8------------------------------"));
+        
+        commandContext.sendMessage(Message.raw("§8------------------------------"));
     }
 }

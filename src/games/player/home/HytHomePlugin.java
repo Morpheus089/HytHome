@@ -10,30 +10,33 @@ import games.player.home.commands.SetHomeCommand;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 
-public class HytHomePlugin
-extends JavaPlugin {
+public class HytHomePlugin extends JavaPlugin {
+    
     private HomeManager homeManager;
 
     public HytHomePlugin(@Nonnull JavaPluginInit javaPluginInit) {
         super(javaPluginInit);
     }
 
+    @Override
     protected void setup() {
         this.getLogger().at(Level.INFO).log("HytHome plugin is setting up...");
         this.homeManager = new HomeManager(this.getDataDirectory(), this.getLogger());
         this.getLogger().at(Level.INFO).log("HytHome setup complete!");
     }
 
+    @Override
     protected void start() {
         this.getLogger().at(Level.INFO).log("HytHome plugin is starting!");
-        this.getCommandRegistry().registerCommand((AbstractCommand)new SetHomeCommand(this.homeManager));
-        this.getCommandRegistry().registerCommand((AbstractCommand)new HomeCommand(this.homeManager));
-        this.getCommandRegistry().registerCommand((AbstractCommand)new DelHomeCommand(this.homeManager));
-        this.getCommandRegistry().registerCommand((AbstractCommand)new HomesCommand(this.homeManager));
+        this.getCommandRegistry().registerCommand(new SetHomeCommand(this.homeManager));
+        this.getCommandRegistry().registerCommand(new HomeCommand(this.homeManager));
+        this.getCommandRegistry().registerCommand(new DelHomeCommand(this.homeManager));
+        this.getCommandRegistry().registerCommand(new HomesCommand(this.homeManager));
         this.getLogger().at(Level.INFO).log("HytHome started successfully!");
         this.getLogger().at(Level.INFO).log("Commands available: /sethome, /home, /delhome, /homes");
     }
 
+    @Override
     protected void shutdown() {
         this.getLogger().at(Level.INFO).log("HytHome plugin is shutting down...");
         if (this.homeManager != null) {

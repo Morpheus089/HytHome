@@ -7,7 +7,6 @@ import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
-import com.hypixel.hytale.server.core.command.system.arguments.types.ArgumentType;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
 import com.hypixel.hytale.server.core.modules.entity.teleport.Teleport;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
@@ -18,53 +17,107 @@ import games.player.home.HomeManager;
 import java.util.UUID;
 import javax.annotation.Nonnull;
 
-public class HomeCommand
-extends AbstractPlayerCommand {
+public class HomeCommand extends AbstractPlayerCommand {
+    
     private final HomeManager homeManager;
+    private final RequiredArg<String> homeNameArg;
 
     public HomeCommand(@Nonnull HomeManager homeManager) {
-        super("home", "Teleport to your home. Usage: /home <name>");
+        super(
+            "home", 
+            "Teleport to your home. Usage: /home <name>"
+        );
         this.homeManager = homeManager;
-        this.homeNameArg = this.withRequiredArg("name", "The name of the home to teleport to", (ArgumentType)ArgTypes.STRING);
+        
+        this.homeNameArg = this.withRequiredArg(
+            "name", 
+            "The name of the home to teleport to", 
+            ArgTypes.STRING
+        );
     }
 
+    @Override
     protected boolean canGeneratePermission() {
         return false;
     }
 
-    protected void execute(@Nonnull CommandContext commandContext, @Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
-        UUID uUID = playerRef.getUuid();
-        String string = (String)commandContext.get(this.homeNameArg);
-        if (string == null || string.isEmpty()) {
-            commandContext.sendMessage(Message.raw((String)"§8------------------------------"));
-            commandContext.sendMessage(Message.raw((String)"§c[!] Utilisation: /home <nom>"));
-            commandContext.sendMessage(Message.raw((String)"§7Utilise /homes pour voir tes homes"));
-            commandContext.sendMessage(Message.raw((String)"§8------------------------------"));
+    @Override
+    protected void execute(
+            @Nonnull CommandContext commandContext,
+            @Nonnull Store<EntityStore> store,
+            @Nonnull Ref<EntityStore> ref,
+            @Nonnull PlayerRef playerRef,
+            @Nonnull World currentWorld) {
+        
+        UUID playerUuid = playerRef.getUuid();
+        String homeName = commandContext.get(this.homeNameArg);
+        
+        if (homeName == null || homeName.isEmpty()) {
+            this.sendUsageError(commandContext, "Utilisation: /home <nom>");
+            commandContext.sendMessage(
+                Message.raw("§7Utilise /homes pour voir tes homes")
+            );
             return;
         }
-        String homeName = string.toLowerCase();
-        HomeManager.HomeLocation homeLocation = this.homeManager.getHome(uUID, homeName);
+        
+        homeName = homeName.toLowerCase();
+        
+        HomeManager.HomeLocation homeLocation = this.homeManager.getHome(
+            playerUuid, 
+            homeName
+        );
+        
         if (homeLocation == null) {
-            commandContext.sendMessage(Message.raw((String)"§8------------------------------"));
-            commandContext.sendMessage(Message.raw((String)"§c[!] Home '§f" + homeName + "§c' introuvable"));
-            commandContext.sendMessage(Message.raw((String)"§7Utilise /homes pour voir tes homes"));
-            commandContext.sendMessage(Message.raw((String)"§8------------------------------"));
+            commandContext.sendMessage(
+                Message.raw("§8------------------------------")
+            );
+            commandContext.sendMessage(
+                Message.raw("§c[!] Home '§f" + homeName + "§c' introuvable")
+            );
+            commandContext.sendMessage(
+                Message.raw("§7Utilise /homes pour voir tes homes")
+            );
+            commandContext.sendMessage(
+                Message.raw("§8------------------------------")
+            );
             return;
         }
-        World world2 = Universe.get().getWorld(homeLocation.worldName());
-        if (world2 == null) {
-            world2 = world;
+        
+        World targetWorld = Universe.get().getWorld(homeLocation.worldName());
+        if (targetWorld == null) {
+            targetWorld = currentWorld;
         }
-        world2.execute(() -> {
-            Vector3f vector3f = new Vector3f(0.0f, homeLocation.yaw(), 0.0f);
-            Vector3f vector3f2 = homeLocation.toRotation();
-            Teleport teleport = new Teleport(world, homeLocation.toPosition(), vector3f).withHeadRotation(vector3f2);
+
+        final World finalTargetWorld = targetWorld;
+        final String finalHomeName = homeName;
+
+        finalTargetWorld.execute(() -> {
+            Vector3f bodyRotation = new Vector3f(0.0f, homeLocation.yaw(), 0.0f);
+            Vector3f headRotation = homeLocation.toRotation();
+
+            Teleport teleport = Teleport.createForPlayer(
+                finalTargetWorld,
+                homeLocation.toPosition(),
+                bodyRotation
+            );
+            
+            teleport.setHeadRotation(headRotation);
+
             store.addComponent(ref, Teleport.getComponentType(), teleport);
-            commandContext.sendMessage(Message.raw((String)"§8------------------------------"));
-            commandContext.sendMessage(Message.raw((String)"§a[✓] Teleportation vers '§f" + homeName + "§a'"));
-            commandContext.sendMessage(Message.raw((String)"§8------------------------------"));
+            
+            commandContext.sendMessage(Message.raw("§8------------------------------"));
+            commandContext.sendMessage(
+                Message.raw("§a[✓] Teleportation vers '§f" + finalHomeName + "§a'")
+            );
+            commandContext.sendMessage(Message.raw("§8------------------------------"));
         });
     }
 
-    private final RequiredArg<String> homeNameArg;
+    private void sendUsageError(
+            @Nonnull CommandContext commandContext, 
+            @Nonnull String message) {
+        commandContext.sendMessage(Message.raw("§8------------------------------"));
+        commandContext.sendMessage(Message.raw("§c[!] " + message));
+        commandContext.sendMessage(Message.raw("§8------------------------------"));
+    }
 }
